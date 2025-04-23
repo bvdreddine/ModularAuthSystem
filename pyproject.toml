@@ -23,4 +23,5 @@ dependencies = [
     "flask-bootstrap>=3.3.7.1",
     "werkzeug>=3.1.3",
     "flask-login>=0.6.3",
+    "flask-wtf>=1.2.2",
 ]
