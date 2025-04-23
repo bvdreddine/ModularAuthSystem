@@ -1,0 +1,34 @@
+{% extends 'base.html' %}
+
+{% block title %}Login - Education Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-6 offset-md-3">
+        <div class="card shadow">
+            <div class="card-header">
+                <h3 class="card-title">Login</h3>
+            </div>
+            <div class="card-body">
+                <form method="post" action="{{ url_for('login') }}">
+                    <div class="mb-3">
+                        <label for="username" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="username" name="username" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="password" name="password" required>
+                    </div>
+                    <div class="d-grid">
+                        <button type="submit" class="btn btn-primary">Log in</button>
+                    </div>
+                </form>
+            </div>
+            <div class="card-footer text-center text-muted">
+                <p class="mb-0">Demo Credentials (Mock Mode):</p>
+                <small>Email: admin@example.com<br>Password: admin123</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

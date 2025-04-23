@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Admin Dashboard - Education Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Admin Dashboard</h2>
+        <p class="lead">Welcome to the administrator dashboard</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h4 class="card-title">User Management</h4>
+                <p class="card-text">Manage users, roles and permissions</p>
+                <a href="{{ url_for('users_list') }}" class="btn btn-primary">View Users</a>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h4 class="card-title">System Status</h4>
+                <p class="card-text">Monitor system health and services</p>
+                <div class="list-group mt-3">
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Authentication Service</div>
+                            <span class="badge bg-success">Operational</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>User Management Service</div>
+                            <span class="badge bg-success">Operational</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Keycloak Integration</div>
+                            <span class="badge bg-warning">Simulated</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Cassandra Database</div>
+                            <span class="badge bg-warning">Simulated</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h4 class="card-title">Quick Actions</h4>
+                <p class="card-text">Common administrative tasks</p>
+                <div class="d-grid gap-2">
+                    <a href="{{ url_for('create_user') }}" class="btn btn-outline-primary">Create New User</a>
+                    <button class="btn btn-outline-secondary" disabled>System Settings</button>
+                    <button class="btn btn-outline-secondary" disabled>View Activity Logs</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row mt-4">
+    <div class="col-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">System Information</h4>
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table">
+                        <tbody>
+                            <tr>
+                                <th>Mode</th>
+                                <td>Mock (Development)</td>
+                            </tr>
+                            <tr>
+                                <th>Auth Service URL</th>
+                                <td>http://localhost:8000</td>
+                            </tr>
+                            <tr>
+                                <th>User Service URL</th>
+                                <td>http://localhost:8001</td>
+                            </tr>
+                            <tr>
+                                <th>Frontend Version</th>
+                                <td>1.0.0</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

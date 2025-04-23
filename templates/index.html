@@ -1,0 +1,62 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Education Platform{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-md-8 offset-md-2 text-center">
+        <div class="mt-5 mb-5">
+            <h1>Welcome to the Education Platform</h1>
+            <p class="lead">A modern platform for educational institutions to manage users and resources</p>
+        </div>
+
+        <div class="card shadow">
+            <div class="card-body">
+                <h2>Microservices Architecture</h2>
+                <p>Our platform is built with a modern microservices architecture using FastAPI for the backend:</p>
+                
+                <div class="row mt-4">
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5>Authentication Service</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Handles user authentication with OAuth2 and Keycloak integration</p>
+                                <ul class="text-start">
+                                    <li>Secure JWT token generation</li>
+                                    <li>Token validation and introspection</li>
+                                    <li>Role-based access control</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card mb-3">
+                            <div class="card-header">
+                                <h5>User Management Service</h5>
+                            </div>
+                            <div class="card-body">
+                                <p>Manages users, roles, and permissions</p>
+                                <ul class="text-start">
+                                    <li>User CRUD operations</li>
+                                    <li>Role assignment and management</li>
+                                    <li>Cassandra database integration</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="mt-5">
+            {% if not session.get('token') %}
+                <a href="{{ url_for('login') }}" class="btn btn-primary btn-lg">Login to the Platform</a>
+            {% else %}
+                <a href="{{ url_for('dashboard') }}" class="btn btn-primary btn-lg">Go to Dashboard</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+{% endblock %}

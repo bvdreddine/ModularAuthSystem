@@ -1,0 +1,105 @@
+{% extends 'base.html' %}
+
+{% block title %}Teacher Dashboard - Education Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Teacher Dashboard</h2>
+        <p class="lead">Welcome to the teacher dashboard</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h4 class="card-title">Course Management</h4>
+                <p class="card-text">Manage your courses and class materials</p>
+                <div class="list-group mt-3">
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Introduction to Mathematics</div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Advanced Physics</div>
+                            <span class="badge bg-success">Active</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Computer Science Fundamentals</div>
+                            <span class="badge bg-secondary">Upcoming</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary mt-3" disabled>View All Courses</button>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="card shadow h-100">
+            <div class="card-body">
+                <h4 class="card-title">Student Management</h4>
+                <p class="card-text">View and manage your students</p>
+                <div class="list-group mt-3">
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Mathematics Class</div>
+                            <span class="badge bg-primary">28 Students</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Physics Class</div>
+                            <span class="badge bg-primary">16 Students</span>
+                        </div>
+                    </div>
+                    <div class="list-group-item">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>Computer Science Class</div>
+                            <span class="badge bg-primary">22 Students</span>
+                        </div>
+                    </div>
+                </div>
+                <button class="btn btn-outline-primary mt-3" disabled>View All Students</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-12">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">Quick Actions</h4>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-primary" disabled>Create New Course</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-primary" disabled>Upload Materials</button>
+                        </div>
+                    </div>
+                    <div class="col-md-4 mb-3">
+                        <div class="d-grid">
+                            <button class="btn btn-outline-primary" disabled>Schedule Office Hours</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="card-footer text-center text-muted">
+                <small>Note: Functionality is limited in the demo version</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
