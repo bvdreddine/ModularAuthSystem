@@ -17,8 +17,8 @@ class Settings(BaseSettings):
     CASSANDRA_CONTACT_POINTS: str = Field(default="localhost")
     CASSANDRA_PORT: int = Field(default=9042)
     CASSANDRA_KEYSPACE: str = Field(default="user_management")
-    CASSANDRA_USERNAME: str = Field(default=None)
-    CASSANDRA_PASSWORD: str = Field(default=None)
+    CASSANDRA_USERNAME: str = Field(default="cassandra")
+    CASSANDRA_PASSWORD: str = Field(default="cassandra")
     
     # Auth service
     AUTH_SERVICE_URL: str = Field(default="http://localhost:8000")

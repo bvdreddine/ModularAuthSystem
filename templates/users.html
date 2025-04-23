@@ -1,0 +1,109 @@
+{% extends 'base.html' %}
+
+{% block title %}User Management - Education Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col-md-8">
+        <h2>User Management</h2>
+        <p class="lead">Manage system users, roles and permissions</p>
+    </div>
+    <div class="col-md-4 text-end">
+        <a href="{{ url_for('create_user') }}" class="btn btn-primary">
+            <i class="bi bi-plus-circle"></i> Create New User
+        </a>
+    </div>
+</div>
+
+<div class="card shadow">
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Name</th>
+                        <th>Email</th>
+                        <th>Role</th>
+                        <th>Department</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for user in users %}
+                    <tr>
+                        <td>{{ user.first_name }} {{ user.last_name }}</td>
+                        <td>{{ user.email }}</td>
+                        <td><span class="badge bg-primary text-capitalize">{{ user.role }}</span></td>
+                        <td>{{ user.department or 'N/A' }}</td>
+                        <td>
+                            {% if user.active %}
+                            <span class="badge bg-success">Active</span>
+                            {% else %}
+                            <span class="badge bg-danger">Inactive</span>
+                            {% endif %}
+                        </td>
+                        <td>
+                            <div class="btn-group btn-group-sm" role="group">
+                                <a href="{{ url_for('edit_user', user_id=user.id) }}" class="btn btn-outline-primary">Edit</a>
+                                <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal{{ user.id }}">Delete</button>
+                            </div>
+                            
+                            <!-- Delete Modal -->
+                            <div class="modal fade" id="deleteModal{{ user.id }}" tabindex="-1" aria-labelledby="deleteModalLabel{{ user.id }}" aria-hidden="true">
+                                <div class="modal-dialog">
+                                    <div class="modal-content">
+                                        <div class="modal-header">
+                                            <h5 class="modal-title" id="deleteModalLabel{{ user.id }}">Confirm Deletion</h5>
+                                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                        </div>
+                                        <div class="modal-body">
+                                            Are you sure you want to delete user <strong>{{ user.first_name }} {{ user.last_name }}</strong>?
+                                            <br><br>
+                                            <div class="alert alert-warning">
+                                                This action cannot be undone.
+                                            </div>
+                                        </div>
+                                        <div class="modal-footer">
+                                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                                            <form action="{{ url_for('delete_user', user_id=user.id) }}" method="post" style="display: inline;">
+                                                <button type="submit" class="btn btn-danger">Delete</button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        {% if pagination.total > pagination.size %}
+        <nav aria-label="Page navigation" class="mt-4">
+            <ul class="pagination justify-content-center">
+                {% set pages = (pagination.total // pagination.size) + (1 if pagination.total % pagination.size else 0) %}
+                
+                <li class="page-item {{ 'disabled' if pagination.page == 1 else '' }}">
+                    <a class="page-link" href="{{ url_for('users_list', page=pagination.page-1) if pagination.page > 1 else '#' }}">Previous</a>
+                </li>
+                
+                {% for page in range(1, pages + 1) %}
+                <li class="page-item {{ 'active' if page == pagination.page else '' }}">
+                    <a class="page-link" href="{{ url_for('users_list', page=page) }}">{{ page }}</a>
+                </li>
+                {% endfor %}
+                
+                <li class="page-item {{ 'disabled' if pagination.page == pages else '' }}">
+                    <a class="page-link" href="{{ url_for('users_list', page=pagination.page+1) if pagination.page < pages else '#' }}">Next</a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+    </div>
+    <div class="card-footer text-center text-muted">
+        <small>Showing {{ users|length }} of {{ pagination.total }} users</small>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+
+{% block title %}Student Dashboard - Education Platform{% endblock %}
+
+{% block content %}
+<div class="row mb-4">
+    <div class="col">
+        <h2>Student Dashboard</h2>
+        <p class="lead">Welcome to your student dashboard</p>
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-md-8 mb-4">
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">My Courses</h4>
+            </div>
+            <div class="card-body">
+                <div class="list-group">
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Introduction to Mathematics</h5>
+                            <small class="text-success">Enrolled</small>
+                        </div>
+                        <p class="mb-1">Learn the fundamentals of mathematics with Prof. Smith</p>
+                        <small class="text-muted">Next class: Monday, 10:00 AM</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Physics 101</h5>
+                            <small class="text-success">Enrolled</small>
+                        </div>
+                        <p class="mb-1">Discover the principles of physics with Dr. Johnson</p>
+                        <small class="text-muted">Next class: Tuesday, 2:00 PM</small>
+                    </a>
+                    <a href="#" class="list-group-item list-group-item-action">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h5 class="mb-1">Computer Science Basics</h5>
+                            <small class="text-success">Enrolled</small>
+                        </div>
+                        <p class="mb-1">Introduction to programming and algorithms</p>
+                        <small class="text-muted">Next class: Wednesday, 11:00 AM</small>
+                    </a>
+                </div>
+                <div class="d-grid gap-2 mt-3">
+                    <button class="btn btn-outline-primary" disabled>Browse All Courses</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-4 mb-4">
+        <div class="card shadow mb-4">
+            <div class="card-header">
+                <h4 class="mb-0">Upcoming Deadlines</h4>
+            </div>
+            <div class="card-body">
+                <ul class="list-group list-group-flush">
+                    <li class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Math Assignment #3</h6>
+                            <small class="text-danger">2 days left</small>
+                        </div>
+                        <small class="text-muted">Due: April 25, 2025</small>
+                    </li>
+                    <li class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">Physics Lab Report</h6>
+                            <small class="text-warning">5 days left</small>
+                        </div>
+                        <small class="text-muted">Due: April 28, 2025</small>
+                    </li>
+                    <li class="list-group-item px-0">
+                        <div class="d-flex w-100 justify-content-between">
+                            <h6 class="mb-1">CS Programming Project</h6>
+                            <small class="text-success">10 days left</small>
+                        </div>
+                        <small class="text-muted">Due: May 3, 2025</small>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="card shadow">
+            <div class="card-header">
+                <h4 class="mb-0">Quick Links</h4>
+            </div>
+            <div class="card-body">
+                <div class="d-grid gap-2">
+                    <button class="btn btn-outline-primary" disabled>Course Resources</button>
+                    <button class="btn btn-outline-primary" disabled>Schedule</button>
+                    <button class="btn btn-outline-primary" disabled>Grades</button>
+                </div>
+            </div>
+            <div class="card-footer text-center text-muted">
+                <small>Note: Functionality is limited in the demo version</small>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
