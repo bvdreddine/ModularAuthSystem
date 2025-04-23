@@ -1,18 +1,38 @@
 import os
 import json
 import requests
+from datetime import datetime
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
-from flask_bootstrap import Bootstrap5
+from flask_bootstrap import Bootstrap
+from flask_login import LoginManager, login_user, logout_user, login_required, current_user
 from functools import wraps
+from models import db, User, Course, Enrollment
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
-bootstrap = Bootstrap5(app)
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
+    "pool_recycle": 300,
+    "pool_pre_ping": True,
+}
+
+bootstrap = Bootstrap(app)
+db.init_app(app)
+login_manager = LoginManager(app)
+login_manager.login_view = 'login'
+
+@login_manager.user_loader
+def load_user(user_id):
+    return User.query.get(int(user_id))
 
 # Configuration
 AUTH_SERVICE_URL = "http://localhost:8000"  # Auth service URL
 USER_SERVICE_URL = "http://localhost:8001"  # User service URL
 MOCK_MODE = True  # Set to False when real services are available
+
+# Create database tables
+with app.app_context():
+    db.create_all()
 
 # Login decorator
 def login_required(f):
@@ -44,37 +64,153 @@ def admin_required(f):
 def index():
     return render_template('index.html')
 
+# Initialize database with default users if empty
+def create_default_users():
+    """Create default users, courses, and enrollments if none exist."""
+    # Check if any users exist
+    user_count = User.query.count()
+    if user_count == 0:
+        # Create default admin user
+        admin = User(
+            first_name='Admin',
+            last_name='User',
+            email='admin@example.com',
+            role='admin',
+            department='IT',
+            phone='123-456-7890',
+            active=True
+        )
+        admin.set_password('admin123')
+        
+        # Create default teacher user
+        teacher = User(
+            first_name='Teacher',
+            last_name='One',
+            email='teacher1@example.com',
+            role='teacher',
+            department='Math',
+            phone='123-456-7891',
+            active=True
+        )
+        teacher.set_password('teacher123')
+        
+        # Create default student user
+        student = User(
+            first_name='Student',
+            last_name='One',
+            email='student1@example.com',
+            role='student',
+            department='Math',
+            phone='123-456-7892',
+            active=True
+        )
+        student.set_password('student123')
+        
+        # Add users to database
+        db.session.add(admin)
+        db.session.add(teacher)
+        db.session.add(student)
+        db.session.commit()
+        
+        # Create default courses
+        math_course = Course(
+            title='Introduction to Mathematics',
+            description='Learn the fundamentals of mathematics',
+            teacher_id=teacher.id,
+            department='Math',
+            active=True
+        )
+        
+        physics_course = Course(
+            title='Physics 101',
+            description='Discover the principles of physics',
+            teacher_id=teacher.id,
+            department='Science',
+            active=True
+        )
+        
+        cs_course = Course(
+            title='Computer Science Basics',
+            description='Introduction to programming and algorithms',
+            teacher_id=teacher.id,
+            department='Computer Science',
+            active=True
+        )
+        
+        # Add courses to database
+        db.session.add(math_course)
+        db.session.add(physics_course)
+        db.session.add(cs_course)
+        db.session.commit()
+        
+        # Enroll student in courses
+        math_enrollment = Enrollment(
+            student_id=student.id,
+            course_id=math_course.id,
+            status='active'
+        )
+        
+        physics_enrollment = Enrollment(
+            student_id=student.id,
+            course_id=physics_course.id,
+            status='active'
+        )
+        
+        cs_enrollment = Enrollment(
+            student_id=student.id,
+            course_id=cs_course.id,
+            status='active'
+        )
+        
+        # Add enrollments to database
+        db.session.add(math_enrollment)
+        db.session.add(physics_enrollment)
+        db.session.add(cs_enrollment)
+        db.session.commit()
+
+# Fonction pour initialiser les tables et les données par défaut
+def init_db():
+    with app.app_context():
+        db.create_all()
+        create_default_users()
+
+# Exécuter l'initialisation de la base de données
+init_db()
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
-        username = request.form.get('username')
+        email = request.form.get('username')  # Form field is named 'username' but contains email
         password = request.form.get('password')
         
-        if not username or not password:
-            flash('Username and password are required', 'danger')
+        if not email or not password:
+            flash('Email and password are required', 'danger')
             return render_template('login.html')
         
         try:
             if MOCK_MODE:
-                # Mock authentication for development/testing
-                if username == 'admin@example.com' and password == 'admin123':
-                    session['token'] = 'mock-token'
-                    session['user_info'] = {
-                        'username': username,
-                        'first_name': 'Admin',
-                        'last_name': 'User'
-                    }
-                    session['user_roles'] = ['admin']
-                    flash('Successfully logged in (MOCK MODE)!', 'success')
+                # Database authentication instead of microservices
+                user = User.query.filter_by(email=email).first()
+                
+                if user and user.check_password(password):
+                    # Login user with Flask-Login
+                    login_user(user)
+                    
+                    # Store info in session for compatibility with old code
+                    session['token'] = 'database-auth-token'
+                    session['user_info'] = user.to_dict()
+                    session['user_roles'] = [user.role]
+                    
+                    flash(f'Welcome back, {user.first_name}!', 'success')
                     return redirect(url_for('dashboard'))
                 else:
-                    flash('Invalid credentials (MOCK MODE)', 'danger')
+                    flash('Invalid credentials', 'danger')
             else:
                 # Real authentication through Auth Service
                 response = requests.post(
                     f"{AUTH_SERVICE_URL}/auth/token",
                     data={
-                        "username": username,
+                        "username": email,
                         "password": password,
                         "grant_type": "password",
                         "client_id": "auth-service",
@@ -91,7 +227,8 @@ def login():
                     user_response = requests.get(f"{USER_SERVICE_URL}/users/me", headers=headers)
                     
                     if user_response.status_code == 200:
-                        session['user_info'] = user_response.json()
+                        user_data = user_response.json()
+                        session['user_info'] = user_data
                         
                         # Extract roles from token
                         token_validation = requests.post(
@@ -100,6 +237,25 @@ def login():
                         )
                         token_payload = token_validation.json()
                         session['user_roles'] = token_payload.get('realm_access', {}).get('roles', [])
+                        
+                        # Also update or create user in local database
+                        user = User.query.filter_by(email=email).first()
+                        if not user:
+                            user = User(
+                                email=email,
+                                first_name=user_data.get('first_name', ''),
+                                last_name=user_data.get('last_name', ''),
+                                role=user_data.get('role', 'student'),
+                                department=user_data.get('department', ''),
+                                phone=user_data.get('phone', ''),
+                                active=user_data.get('active', True),
+                                keycloak_id=user_data.get('id', '')
+                            )
+                            db.session.add(user)
+                            db.session.commit()
+                        
+                        # Login user with Flask-Login
+                        login_user(user)
                         
                         flash('Successfully logged in!', 'success')
                         return redirect(url_for('dashboard'))
@@ -114,6 +270,7 @@ def login():
 
 @app.route('/logout')
 def logout():
+    logout_user()  # Flask-Login logout
     session.clear()
     flash('You have been logged out', 'info')
     return redirect(url_for('index'))
@@ -138,38 +295,27 @@ def profile():
 @admin_required
 def users_list():
     try:
+        page = int(request.args.get('page', 1))
+        size = int(request.args.get('size', 10))
+        
         if MOCK_MODE:
-            # Mock user data for development/testing
-            users = [
-                {
-                    'id': '1',
-                    'first_name': 'Admin',
-                    'last_name': 'User',
-                    'email': 'admin@example.com',
-                    'role': 'admin',
-                    'active': True
-                },
-                {
-                    'id': '2',
-                    'first_name': 'Teacher',
-                    'last_name': 'One',
-                    'email': 'teacher1@example.com',
-                    'role': 'teacher',
-                    'active': True
-                },
-                {
-                    'id': '3',
-                    'first_name': 'Student',
-                    'last_name': 'One',
-                    'email': 'student1@example.com',
-                    'role': 'student',
-                    'active': True
-                }
-            ]
+            # Get users from database
+            users_query = User.query.order_by(User.created_at.desc())
+            
+            # Get total count
+            total = users_query.count()
+            
+            # Paginate
+            offset = (page - 1) * size
+            users_paginated = users_query.offset(offset).limit(size).all()
+            
+            # Convert to dict
+            users = [user.to_dict() for user in users_paginated]
+            
             pagination = {
-                'total': 3,
-                'page': 1,
-                'size': 10
+                'total': total,
+                'page': page,
+                'size': size
             }
         else:
             # Real user data from User Service
@@ -177,7 +323,7 @@ def users_list():
             response = requests.get(
                 f"{USER_SERVICE_URL}/users",
                 headers=headers,
-                params={'page': request.args.get('page', 1), 'size': request.args.get('size', 10)}
+                params={'page': page, 'size': size}
             )
             
             if response.status_code == 200:
@@ -201,23 +347,53 @@ def users_list():
 @admin_required
 def create_user():
     if request.method == 'POST':
-        user_data = {
-            'first_name': request.form.get('first_name'),
-            'last_name': request.form.get('last_name'),
-            'email': request.form.get('email'),
-            'password': request.form.get('password'),
-            'role': request.form.get('role'),
-            'department': request.form.get('department'),
-            'phone': request.form.get('phone'),
-            'active': True if request.form.get('active') == 'on' else False
-        }
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        password = request.form.get('password')
+        role = request.form.get('role')
+        department = request.form.get('department')
+        phone = request.form.get('phone')
+        active = True if request.form.get('active') == 'on' else False
         
         try:
             if MOCK_MODE:
-                # Mock user creation for development/testing
-                flash('User created successfully (MOCK MODE)!', 'success')
+                # Check if user already exists
+                existing_user = User.query.filter_by(email=email).first()
+                if existing_user:
+                    flash('A user with this email already exists', 'danger')
+                    return render_template('user_form.html', user=None, action='create')
+                
+                # Create user in database
+                new_user = User(
+                    first_name=first_name,
+                    last_name=last_name,
+                    email=email,
+                    role=role,
+                    department=department,
+                    phone=phone,
+                    active=active
+                )
+                new_user.set_password(password)
+                
+                db.session.add(new_user)
+                db.session.commit()
+                
+                flash('User created successfully!', 'success')
                 return redirect(url_for('users_list'))
             else:
+                # Prepare data for User Service
+                user_data = {
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'email': email,
+                    'password': password,
+                    'role': role,
+                    'department': department,
+                    'phone': phone,
+                    'active': active
+                }
+                
                 # Real user creation through User Service
                 headers = {'Authorization': f'Bearer {session["token"]}'}
                 response = requests.post(
@@ -227,6 +403,23 @@ def create_user():
                 )
                 
                 if response.status_code == 201:
+                    # Also create user in local database
+                    user_response = response.json()
+                    new_user = User(
+                        first_name=first_name,
+                        last_name=last_name,
+                        email=email,
+                        role=role,
+                        department=department,
+                        phone=phone,
+                        active=active,
+                        keycloak_id=user_response.get('id', '')
+                    )
+                    new_user.set_password(password)
+                    
+                    db.session.add(new_user)
+                    db.session.commit()
+                    
                     flash('User created successfully!', 'success')
                     return redirect(url_for('users_list'))
                 else:
@@ -240,32 +433,74 @@ def create_user():
 @app.route('/users/edit/<user_id>', methods=['GET', 'POST'])
 @admin_required
 def edit_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found', 'danger')
+        return redirect(url_for('users_list'))
+    
     if request.method == 'POST':
-        user_data = {
-            'first_name': request.form.get('first_name'),
-            'last_name': request.form.get('last_name'),
-            'email': request.form.get('email'),
-            'role': request.form.get('role'),
-            'department': request.form.get('department'),
-            'phone': request.form.get('phone'),
-            'active': True if request.form.get('active') == 'on' else False
-        }
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        email = request.form.get('email')
+        role = request.form.get('role')
+        department = request.form.get('department')
+        phone = request.form.get('phone')
+        active = True if request.form.get('active') == 'on' else False
         
         try:
             if MOCK_MODE:
-                # Mock user update for development/testing
-                flash('User updated successfully (MOCK MODE)!', 'success')
+                # Check if email is being changed and already exists
+                if email != user.email and User.query.filter_by(email=email).first():
+                    flash('A user with this email already exists', 'danger')
+                    return render_template('user_form.html', user=user.to_dict(), action='edit')
+                
+                # Update user in database
+                user.first_name = first_name
+                user.last_name = last_name
+                user.email = email
+                user.role = role
+                user.department = department
+                user.phone = phone
+                user.active = active
+                user.updated_at = datetime.utcnow()
+                
+                db.session.commit()
+                
+                flash('User updated successfully!', 'success')
                 return redirect(url_for('users_list'))
             else:
+                # Prepare data for User Service
+                user_data = {
+                    'first_name': first_name,
+                    'last_name': last_name,
+                    'email': email,
+                    'role': role,
+                    'department': department,
+                    'phone': phone,
+                    'active': active
+                }
+                
                 # Real user update through User Service
                 headers = {'Authorization': f'Bearer {session["token"]}'}
                 response = requests.put(
-                    f"{USER_SERVICE_URL}/users/{user_id}",
+                    f"{USER_SERVICE_URL}/users/{user.keycloak_id}",
                     json=user_data,
                     headers=headers
                 )
                 
                 if response.status_code == 200:
+                    # Also update user in local database
+                    user.first_name = first_name
+                    user.last_name = last_name
+                    user.email = email
+                    user.role = role
+                    user.department = department
+                    user.phone = phone
+                    user.active = active
+                    user.updated_at = datetime.utcnow()
+                    
+                    db.session.commit()
+                    
                     flash('User updated successfully!', 'success')
                     return redirect(url_for('users_list'))
                 else:
@@ -274,81 +509,46 @@ def edit_user(user_id):
         except Exception as e:
             flash(f'Error updating user: {str(e)}', 'danger')
             
-    try:
-        if MOCK_MODE:
-            # Mock user data for development/testing
-            if user_id == '1':
-                user = {
-                    'id': '1',
-                    'first_name': 'Admin',
-                    'last_name': 'User',
-                    'email': 'admin@example.com',
-                    'role': 'admin',
-                    'department': 'IT',
-                    'phone': '123-456-7890',
-                    'active': True
-                }
-            elif user_id == '2':
-                user = {
-                    'id': '2',
-                    'first_name': 'Teacher',
-                    'last_name': 'One',
-                    'email': 'teacher1@example.com',
-                    'role': 'teacher',
-                    'department': 'Math',
-                    'phone': '123-456-7891',
-                    'active': True
-                }
-            else:
-                user = {
-                    'id': '3',
-                    'first_name': 'Student',
-                    'last_name': 'One',
-                    'email': 'student1@example.com',
-                    'role': 'student',
-                    'department': 'Math',
-                    'phone': '123-456-7892',
-                    'active': True
-                }
-        else:
-            # Real user data from User Service
-            headers = {'Authorization': f'Bearer {session["token"]}'}
-            response = requests.get(
-                f"{USER_SERVICE_URL}/users/{user_id}",
-                headers=headers
-            )
-            
-            if response.status_code == 200:
-                user = response.json()
-            else:
-                flash('User not found', 'danger')
-                return redirect(url_for('users_list'))
-    except Exception as e:
-        flash(f'Error retrieving user: {str(e)}', 'danger')
-        return redirect(url_for('users_list'))
-        
-    return render_template('user_form.html', user=user, action='edit')
+    return render_template('user_form.html', user=user.to_dict(), action='edit')
 
 @app.route('/users/delete/<user_id>', methods=['POST'])
 @admin_required
 def delete_user(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        flash('User not found', 'danger')
+        return redirect(url_for('users_list'))
+    
     try:
         if MOCK_MODE:
-            # Mock user deletion for development/testing
-            flash('User deleted successfully (MOCK MODE)!', 'success')
+            # Delete user from database
+            db.session.delete(user)
+            db.session.commit()
+            flash('User deleted successfully!', 'success')
         else:
             # Real user deletion through User Service
             headers = {'Authorization': f'Bearer {session["token"]}'}
-            response = requests.delete(
-                f"{USER_SERVICE_URL}/users/{user_id}",
-                headers=headers
-            )
             
-            if response.status_code == 204:
-                flash('User deleted successfully!', 'success')
+            if user.keycloak_id:
+                # Delete user in Keycloak through User Service
+                response = requests.delete(
+                    f"{USER_SERVICE_URL}/users/{user.keycloak_id}",
+                    headers=headers
+                )
+                
+                if response.status_code == 204:
+                    # Also delete user from local database
+                    db.session.delete(user)
+                    db.session.commit()
+                    flash('User deleted successfully!', 'success')
+                else:
+                    error_message = response.json().get('detail', 'Failed to delete user from remote service')
+                    flash(error_message, 'danger')
             else:
-                error_message = response.json().get('detail', 'Failed to delete user')
-                flash(error_message, 'danger')
+                # Just delete from local database if no Keycloak ID
+                db.session.delete(user)
+                db.session.commit()
+                flash('User deleted successfully!', 'success')
     except Exception as e:
         flash(f'Error deleting user: {str(e)}', 'danger')
         
