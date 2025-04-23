@@ -1,0 +1,12 @@
+FROM python:3.9-slim
+
+WORKDIR /app
+
+# Install dependencies
+RUN pip install --no-cache-dir fastapi uvicorn httpx python-jose python-multipart pydantic python-dotenv cassandra-driver email-validator
+
+# Copy application code
+COPY ./user_service /app/
+
+# Set the default command
+CMD ["python", "main.py"]
