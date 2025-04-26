@@ -2,6 +2,13 @@ import os
 import json
 import requests
 from datetime import datetime
+from dotenv import load_dotenv
+
+# Charger les variables d'environnement depuis le fichier .env
+load_dotenv()
+
+print("Variables d'environnement chargées")
+print(f"DATABASE_URL = {os.environ.get('DATABASE_URL')}")
 from flask import Flask, render_template, request, redirect, url_for, flash, session, jsonify
 from flask_bootstrap import Bootstrap
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
@@ -10,7 +17,9 @@ from models import db, User, Course, Enrollment
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SESSION_SECRET", "dev-secret-key")
-app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get("DATABASE_URL")
+# Utiliser SQLite directement sans dépendre des variables d'environnement
+app.config["SQLALCHEMY_DATABASE_URI"] = "sqlite:///modular_auth_system.db"
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_ENGINE_OPTIONS"] = {
     "pool_recycle": 300,
     "pool_pre_ping": True,

@@ -1,0 +1,92 @@
+version: '3.8'
+
+services:
+  # Application principale Flask
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./instance:/app/instance
+    environment:
+      - DATABASE_URL=sqlite:///modular_auth_system.db
+      - SESSION_SECRET=change_this_in_production
+      - MOCK_MODE=true
+    restart: unless-stopped
+    networks:
+      - modular-network
+
+  # Service d'authentification (optionnel - pour le mode microservices)
+  auth-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.auth
+    ports:
+      - "8000:8000"
+    environment:
+      - KEYCLOAK_SERVER_URL=http://keycloak:8080/auth
+      - KEYCLOAK_REALM=master
+      - KEYCLOAK_CLIENT_ID=auth-service
+      - KEYCLOAK_CLIENT_SECRET=your-client-secret
+    depends_on:
+      - keycloak
+    restart: unless-stopped
+    networks:
+      - modular-network
+
+  # Service utilisateur (optionnel - pour le mode microservices)
+  user-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.user
+    ports:
+      - "8001:8001"
+    environment:
+      - CASSANDRA_CONTACT_POINTS=cassandra
+      - CASSANDRA_PORT=9042
+      - CASSANDRA_KEYSPACE=user_management
+      - CASSANDRA_USERNAME=cassandra
+      - CASSANDRA_PASSWORD=cassandra
+      - AUTH_SERVICE_URL=http://auth-service:8000
+    depends_on:
+      - cassandra
+      - auth-service
+    restart: unless-stopped
+    networks:
+      - modular-network
+
+  # Keycloak pour l'authentification (optionnel - pour le mode microservices)
+  keycloak:
+    image: quay.io/keycloak/keycloak:21.1.1
+    ports:
+      - "8080:8080"
+    environment:
+      - KEYCLOAK_ADMIN=admin
+      - KEYCLOAK_ADMIN_PASSWORD=admin
+    command: start-dev
+    volumes:
+      - keycloak_data:/opt/keycloak/data
+    restart: unless-stopped
+    networks:
+      - modular-network
+
+  # Cassandra pour le service utilisateur (optionnel - pour le mode microservices)
+  cassandra:
+    image: cassandra:4.1
+    ports:
+      - "9042:9042"
+    volumes:
+      - cassandra_data:/var/lib/cassandra
+    restart: unless-stopped
+    networks:
+      - modular-network
+
+volumes:
+  keycloak_data:
+  cassandra_data:
+
+networks:
+  modular-network:
+    driver: bridge
